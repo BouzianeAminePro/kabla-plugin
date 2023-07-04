@@ -2,7 +2,6 @@
   "name": "kabla",
   "version": "1.1.1",
   "description": "monitor of web visibility",
-  "main": "index.js",
   "keywords": [
     "visibility"
   ],
@@ -17,17 +16,21 @@
     "tsup": "^7.1.0",
     "typescript": "^5.0.3"
   },
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\"",
-    "lint": "tslint -p tsconfig.json",
     "prepare": "npm run build",
     "prepublishOnly": "npm test && npm run lint",
     "preversion": "npm run lint",
     "version": "npm run format && git add -A src",
-    "postversion": "git push && git push --tags"
+    "postversion": "git push && git push --tags",
+    "build": "tsup src/* --format cjs,esm --dts",
+    "release": "pnpm run build && changeset publish",
+    "lint": "tsc"
   },
   "files": [
-    "lib/**/*"
+    "dist/**/*"
   ]
 }
