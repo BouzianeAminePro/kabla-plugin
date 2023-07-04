@@ -1,0 +1,5 @@
+---
+'kabla': patch
+---
+
+MIT licence
