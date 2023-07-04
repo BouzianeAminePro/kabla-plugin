@@ -1,0 +1,33 @@
+{
+  "name": "kabla",
+  "version": "1.1.1",
+  "description": "monitor of web visibility",
+  "main": "index.js",
+  "keywords": [
+    "visibility"
+  ],
+  "author": "Bouziane Amine",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@changesets/cli": "^2.26.2",
+    "prettier": "^2.8.7",
+    "tslint": "^6.1.3",
+    "tslint-config-prettier": "^1.18.0",
+    "tsup": "^7.1.0",
+    "typescript": "^5.0.3"
+  },
+  "scripts": {
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "lint": "tslint -p tsconfig.json",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test && npm run lint",
+    "preversion": "npm run lint",
+    "version": "npm run format && git add -A src",
+    "postversion": "git push && git push --tags"
+  },
+  "files": [
+    "lib/**/*"
+  ]
+}
