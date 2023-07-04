@@ -21,11 +21,6 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "format": "prettier --write \"src/**/*.ts\"",
-    "prepare": "npm run build",
-    "prepublishOnly": "npm test && npm run lint",
-    "preversion": "npm run lint",
-    "version": "npm run format && git add -A src",
-    "postversion": "git push && git push --tags",
     "build": "tsup src/* --format cjs,esm --dts",
     "release": "pnpm run build && changeset publish",
     "lint": "tsc"
