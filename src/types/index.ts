@@ -1,6 +1,6 @@
 export type APIConfiguration = {
   apiKey?: string;
-  url: string;
+  url?: string;
   authorizationToken?: string;
 };
 
