@@ -1,5 +1,11 @@
 # kabla
 
+## 2.0.1
+
+### Patch Changes
+
+- fc72b38: add homepage
+
 ## 2.0.0
 
 ### Major Changes
