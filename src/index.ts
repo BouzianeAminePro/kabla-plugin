@@ -4,7 +4,9 @@ import { APIConfiguration, Configuration } from './types';
 let timeSpentOnPage = 0;
 
 const STORAGE_DATA_KEY_NAME = 'kablaData';
-const BACK_END_URL = 'http://localhost:3000';
+const BACK_END_URL = 'https://kabla-app.vercel.app';
+const IP_API_URL = 'https://api.ipify.org/?format=json';
+const routeRegex = /\/\w*$/g;
 
 export function kabla(configuration: Configuration) {
   if (configuration?.disable) {
@@ -57,32 +59,18 @@ async function sendInformation({ domainName, bulkData, apiConfig }: Configuratio
     return;
   }
 
-  const routeRegex = /\/\w*$/g;
-
-  return await getCity(apiConfig)
-    // .then(({country, city}) => {
-    .then(({ country, city }) => {
-      // my database check first for client id use ouath 2
+  return await getUserInformation(apiConfig)
+    .then(async ({ country, city }) => {
       const isBulk = bulkData || undefined === bulkData;
       const body = isBulk
         ? {
-            records: data.map(({ pageName, timeSpentOnPage }: { pageName: string; timeSpentOnPage: number }) => ({
-              pageName: pageName.match(routeRegex)?.shift()?.replace('/', '') || '/',
-              timeSpentOnPage,
-              city,
-              country,
-              domainName,
-            })),
+            records: data.map(({ pageName, timeSpentOnPage }: { pageName: string; timeSpentOnPage: number }) =>
+              transformToSiteData({ pageName, timeSpentOnPage }, city, country, domainName),
+            ),
           }
-        : {
-            pageName: data.pageName.match(routeRegex)?.shift()?.replace('/', '') || '/',
-            timeSpentOnPage: data.timeSpentOnPage,
-            city,
-            country,
-            domainName,
-          };
+        : transformToSiteData(data, city, country, domainName);
 
-      fetch(apiConfig?.url ?? `${BACK_END_URL}/api/${isBulk ? 'sites' : 'site'}`, {
+      return await fetch(apiConfig?.url ?? `${BACK_END_URL}/api/${isBulk ? 'sites' : 'site'}`, {
         body: JSON.stringify(body),
         method: 'POST',
         headers: {
@@ -125,14 +113,14 @@ function handleSpentTime(oldPathName: string, params: Configuration) {
 function handleCtaListeners(ctaList: Array<string> = []) {
   if (!ctaList || !ctaList.length) return;
   document.querySelectorAll(ctaList.map((cta: string) => `#${cta}`).join(', ')).forEach((ctaElement) =>
-    ctaElement.addEventListener('click', (event: any) => {
-      console.log(event.target.id);
+    ctaElement.addEventListener('click', (event: Event) => {
+      console.log((event?.target as HTMLElement)?.id);
     }),
   );
 }
 
-function getCity(apiConfig?: APIConfiguration) {
-  return fetch('https://api.ipify.org/?format=json')
+function getUserInformation(apiConfig?: APIConfiguration) {
+  return fetch(IP_API_URL)
     .then((response) => response.json())
     .then(({ ip }) =>
       fetch(`${BACK_END_URL}/api/source`, {
@@ -148,6 +136,21 @@ function getCity(apiConfig?: APIConfiguration) {
     .catch(console.error);
 }
 
-export function useKabla(params: Configuration) {
-  return kabla(params);
+export function useKabla(configuration: Configuration) {
+  return kabla(configuration);
+}
+
+function transformToSiteData(
+  data: { pageName: string; timeSpentOnPage: number },
+  city: string,
+  country: string,
+  domainName: string,
+) {
+  return {
+    pageName: data?.pageName?.match(routeRegex)?.shift()?.replace('/', '') || '/',
+    timeSpentOnPage: data?.timeSpentOnPage,
+    city,
+    country,
+    domainName,
+  };
 }

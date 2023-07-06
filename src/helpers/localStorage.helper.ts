@@ -25,5 +25,5 @@ export function update(key: string, value: any) {
     data = [];
   }
 
-  set(key, [...data, value]);
+  return set(key, [...data, value]);
 }
