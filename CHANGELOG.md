@@ -1,5 +1,11 @@
 # kabla
 
+## 2.0.0
+
+### Major Changes
+
+- 183357a: migrate to ts
+
 ## 1.2.0
 
 ### Minor Changes
