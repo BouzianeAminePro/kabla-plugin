@@ -1,11 +1,11 @@
-import { get, remove, update } from './helpers';
+import { get, getCookie, remove, setCookie, update } from './helpers';
 import { APIConfiguration, Configuration } from './types';
 
 let timeSpentOnPage = 0;
 
 const STORAGE_DATA_KEY_NAME = 'kablaData';
+const KABLA_UID_COOKIE = 'kablaUID';
 const BACK_END_URL = 'https://kabla-app.vercel.app';
-const IP_API_URL = 'https://api.ipify.org/?format=json';
 const routeRegex = /\/\w*$/g;
 
 export function kabla(configuration: Configuration) {
@@ -17,12 +17,20 @@ export function kabla(configuration: Configuration) {
     return;
   }
 
+  const uid = getCookie(KABLA_UID_COOKIE);
+  if (!uid) {
+    // new user
+    import('uuidv4').then(({ uuid }) => {
+      setCookie(KABLA_UID_COOKIE, uuid(), 90);
+    });
+  }
+
   let oldPathName = document.location.pathname;
   if (configuration.bulkData || undefined === configuration.bulkData) {
     document.onvisibilitychange = () => {
       if (document.visibilityState === 'hidden') {
         const data = get(STORAGE_DATA_KEY_NAME);
-        if (!data || !data?.length) {
+        if (!data?.length) {
           return;
         }
 
@@ -120,19 +128,13 @@ function handleCtaListeners(ctaList: Array<string> = []) {
 }
 
 function getUserInformation(apiConfig?: APIConfiguration) {
-  return fetch(IP_API_URL)
+  return fetch(`${BACK_END_URL}/api/source`, {
+    headers: {
+      Authorization: apiConfig?.apiKey ?? '',
+    },
+  })
     .then((response) => response.json())
-    .then(({ ip }) =>
-      fetch(`${BACK_END_URL}/api/source`, {
-        headers: {
-          Authorization: apiConfig?.apiKey ?? '',
-          'x-real-ip': ip,
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => data)
-        .catch(console.error),
-    )
+    .then((data) => data)
     .catch(console.error);
 }
 

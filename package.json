@@ -31,5 +31,8 @@
   "files": [
     "dist/**/*"
   ],
-  "homepage": "https://kabla-app.vercel.app"
+  "homepage": "https://kabla-app.vercel.app",
+  "dependencies": {
+    "uuidv4": "^6.2.13"
+  }
 }
