@@ -1,5 +1,11 @@
 # kabla
 
+## 3.0.0
+
+### Major Changes
+
+- 420788a: update to the new architecture
+
 ## 2.1.0
 
 ### Minor Changes
