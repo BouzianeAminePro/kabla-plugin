@@ -1,45 +1,56 @@
 import { get, getCookie, remove, setCookie, update } from './helpers';
 import { APIConfiguration, Configuration } from './types';
 
-let timeSpentOnPage = 0;
-
 const STORAGE_DATA_KEY_NAME = 'kablaData';
 const KABLA_UID_COOKIE = 'kablaUID';
+const MAX_COOKIE_DATE = 'January 1, 2038 01:15:00';
 const BACK_END_URL = 'https://kabla-app.vercel.app';
-const routeRegex = /\/\w*$/g;
+const ROUTE_REGEX = /\/\w*$/g;
+
+let timeSpentOnPage = 0;
+let fetchs: Array<Promise<Response | void>> = [];
 
 export function kabla(configuration: Configuration) {
-  if (configuration?.disable) {
-    return;
-  }
-
-  if (typeof window === 'undefined') {
+  if (configuration?.disable || typeof window === 'undefined') {
     return;
   }
 
   const uid = getCookie(KABLA_UID_COOKIE);
   if (!uid) {
-    // new user
-    import('uuidv4').then(({ uuid }) => {
-      setCookie(KABLA_UID_COOKIE, uuid(), 90);
+    import('uuidv4').then(async ({ uuid }) => {
+      const visitorUID = uuid(); // TODO: use backend to generate the uuid
+      setCookie(KABLA_UID_COOKIE, visitorUID, new Date(MAX_COOKIE_DATE));
+      fetchs = [
+        fetch(`${BACK_END_URL}/api/visitor`, {
+          method: 'POST',
+          body: JSON.stringify({
+            id: visitorUID,
+            domainName: configuration?.domainName,
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: configuration?.apiConfig?.apiKey ?? '',
+          },
+        }),
+        ...fetchs,
+      ];
     });
   }
 
   let oldPathName = document.location.pathname;
   if (configuration.bulkData || undefined === configuration.bulkData) {
-    document.onvisibilitychange = () => {
+    document.onvisibilitychange = async () => {
       if (document.visibilityState === 'hidden') {
         const data = get(STORAGE_DATA_KEY_NAME);
-        if (!data?.length) {
-          return;
-        }
+        if (!data?.length) return;
 
-        sendInformation(configuration, data);
+        fetchs.push(sendInformation(configuration, data, ActionType.Visit));
+
+        return await Promise.all(fetchs);
       }
     };
   }
 
-  // self launch listeners in the begining
   triggerListeners(oldPathName, configuration);
 
   const observer = new MutationObserver(() => {
@@ -62,34 +73,49 @@ function triggerListeners(pathname: string, { blackList = [], ctaList = [], ...p
   }
 }
 
-async function sendInformation({ domainName, bulkData, apiConfig }: Configuration, data: any) {
+async function sendInformation({ domainName, bulkData, apiConfig }: Configuration, data: any, actionType: ActionType) {
   if (!domainName || !data || !data?.length) {
     return;
   }
 
-  return await getUserInformation(apiConfig)
-    .then(async ({ country, city }) => {
-      const isBulk = bulkData || undefined === bulkData;
-      const body = isBulk
-        ? {
-            records: data.map(({ pageName, timeSpentOnPage }: { pageName: string; timeSpentOnPage: number }) =>
-              transformToSiteData({ pageName, timeSpentOnPage }, city, country, domainName),
-            ),
-          }
-        : transformToSiteData(data, city, country, domainName);
+  const visitorId = String(getCookie(KABLA_UID_COOKIE));
 
-      return await fetch(apiConfig?.url ?? `${BACK_END_URL}/api/${isBulk ? 'sites' : 'site'}`, {
-        body: JSON.stringify(body),
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: apiConfig?.authorizationToken ?? apiConfig?.apiKey ?? '',
-        },
-      })
-        .then((response) => response.json())
-        .then(() => remove(STORAGE_DATA_KEY_NAME))
-        .catch(console.error);
-    })
+  const { country, city } = (await getUserInformation(apiConfig)) ?? {};
+
+  const isBulk = bulkData || undefined === bulkData;
+  const body = isBulk
+    ? {
+        records: data.map(
+          ({ pageName, timeSpentOnPage, createdAt }: { pageName: string; timeSpentOnPage: number; createdAt: Date }) =>
+            transformToLogData(
+              { pageName, timeSpentOnPage },
+              city,
+              country,
+              domainName,
+              visitorId,
+              actionType,
+              createdAt,
+            ),
+        ),
+      }
+    : transformToLogData(data, city, country, domainName, visitorId, actionType, data?.createdAt);
+
+  const stringifiedBody = JSON.stringify(body);
+
+  // const compressed = compress(stringifiedBody);
+  // console.log('compressed', compressed);
+  // console.log('decompress', decompress(compressed));
+  return await fetch(apiConfig?.url ?? `${BACK_END_URL}/api`, {
+    body: JSON.stringify({ data: stringifiedBody, isBulk }),
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: apiConfig?.authorizationToken ?? apiConfig?.apiKey ?? '',
+      userId: getCookie(KABLA_UID_COOKIE) ?? '',
+    },
+  })
+    .then((response) => response.json())
+    .then(() => remove(STORAGE_DATA_KEY_NAME))
     .catch(console.error);
 }
 
@@ -105,12 +131,20 @@ function handleSpentTime(oldPathName: string, params: Configuration) {
         update(STORAGE_DATA_KEY_NAME, {
           pageName: oldPathName,
           timeSpentOnPage,
+          createdAt: new Date(),
         });
       } else {
-        await sendInformation(params, {
-          pageName: oldPathName,
-          timeSpentOnPage,
-        });
+        fetchs.push(
+          sendInformation(
+            params,
+            {
+              pageName: oldPathName,
+              timeSpentOnPage,
+              createdAt: new Date(),
+            },
+            ActionType.Visit,
+          ),
+        );
       }
 
       timeSpentOnPage = 0;
@@ -142,17 +176,29 @@ export function useKabla(configuration: Configuration) {
   return kabla(configuration);
 }
 
-function transformToSiteData(
+function transformToLogData(
   data: { pageName: string; timeSpentOnPage: number },
   city: string,
   country: string,
   domainName: string,
+  visitorId: string,
+  actionType: ActionType,
+  createdAt: Date,
 ) {
   return {
-    pageName: data?.pageName?.match(routeRegex)?.shift()?.replace('/', '') || '/',
-    timeSpentOnPage: data?.timeSpentOnPage,
-    city,
-    country,
+    actionData: JSON.stringify({
+      pageName: data?.pageName?.match(ROUTE_REGEX)?.shift()?.replace('/', '') || '/',
+      timeSpentOnPage: data?.timeSpentOnPage,
+      city,
+      country,
+    }),
     domainName,
+    visitorId,
+    actionTypeId: actionType,
+    createdAt,
   };
+}
+
+enum ActionType {
+  Visit = 1,
 }
