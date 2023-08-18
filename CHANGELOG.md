@@ -1,5 +1,11 @@
 # kabla
 
+## 2.1.0
+
+### Minor Changes
+
+- 9824cfa: remove call to get ip
+
 ## 2.0.1
 
 ### Patch Changes
