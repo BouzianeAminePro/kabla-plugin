@@ -18,14 +18,15 @@ export function kabla(configuration: Configuration) {
   const uid = getCookie(KABLA_UID_COOKIE);
   if (!uid) {
     import('uuidv4').then(async ({ uuid }) => {
-      const visitorUID = uuid(); // TODO: use backend to generate the uuid
+      const visitorUID = uuid();
       setCookie(KABLA_UID_COOKIE, visitorUID, new Date(MAX_COOKIE_DATE));
+      // TODO: add 1 to new visitors so we can have metric such as how many visitors
       fetchs = [
         fetch(`${BACK_END_URL}/api/visitor`, {
           method: 'POST',
           body: JSON.stringify({
             id: visitorUID,
-            domainName: configuration?.domainName,
+            siteId: configuration?.apiConfig?.siteId,
           }),
           headers: {
             'Content-Type': 'application/json',
@@ -40,14 +41,14 @@ export function kabla(configuration: Configuration) {
   let oldPathName = document.location.pathname;
   if (configuration.bulkData || undefined === configuration.bulkData) {
     document.onvisibilitychange = async () => {
-      if (document.visibilityState === 'hidden') {
-        const data = get(STORAGE_DATA_KEY_NAME);
-        if (!data?.length) return;
+      if (document.visibilityState !== 'hidden') return;
 
-        fetchs.push(sendInformation(configuration, data, ActionType.Visit));
+      const data = get(STORAGE_DATA_KEY_NAME);
+      if (!data?.length) return;
 
-        return await Promise.all(fetchs);
-      }
+      fetchs.push(sendInformation(configuration, data, ActionType.Visit));
+
+      return await Promise.all(fetchs);
     };
   }
 
@@ -73,8 +74,8 @@ function triggerListeners(pathname: string, { blackList = [], ctaList = [], ...p
   }
 }
 
-async function sendInformation({ domainName, bulkData, apiConfig }: Configuration, data: any, actionType: ActionType) {
-  if (!domainName || !data || !data?.length) {
+async function sendInformation({ bulkData, apiConfig }: Configuration, data: any, actionType: ActionType) {
+  if (!data || !data?.length) {
     return;
   }
 
@@ -91,20 +92,17 @@ async function sendInformation({ domainName, bulkData, apiConfig }: Configuratio
               { pageName, timeSpentOnPage },
               city,
               country,
-              domainName,
               visitorId,
               actionType,
               createdAt,
+              apiConfig?.siteId,
             ),
         ),
       }
-    : transformToLogData(data, city, country, domainName, visitorId, actionType, data?.createdAt);
+    : transformToLogData(data, city, country, visitorId, actionType, data?.createdAt, apiConfig?.siteId);
 
   const stringifiedBody = JSON.stringify(body);
 
-  // const compressed = compress(stringifiedBody);
-  // console.log('compressed', compressed);
-  // console.log('decompress', decompress(compressed));
   return await fetch(apiConfig?.url ?? `${BACK_END_URL}/api`, {
     body: JSON.stringify({ data: stringifiedBody, isBulk }),
     method: 'POST',
@@ -180,10 +178,10 @@ function transformToLogData(
   data: { pageName: string; timeSpentOnPage: number },
   city: string,
   country: string,
-  domainName: string,
   visitorId: string,
   actionType: ActionType,
   createdAt: Date,
+  siteId?: number,
 ) {
   return {
     actionData: JSON.stringify({
@@ -192,10 +190,10 @@ function transformToLogData(
       city,
       country,
     }),
-    domainName,
     visitorId,
     actionTypeId: actionType,
     createdAt,
+    siteId,
   };
 }
 
