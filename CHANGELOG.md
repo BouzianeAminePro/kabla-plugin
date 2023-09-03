@@ -1,5 +1,11 @@
 # kabla
 
+## 3.1.0
+
+### Minor Changes
+
+- 940943d: add relation with site entity and visitor to have more preview
+
 ## 3.0.0
 
 ### Major Changes
