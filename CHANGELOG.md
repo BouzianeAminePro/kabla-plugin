@@ -1,5 +1,11 @@
 # kabla
 
+## 3.1.1
+
+### Patch Changes
+
+- f9617f5: Update site type
+
 ## 3.1.0
 
 ### Minor Changes
