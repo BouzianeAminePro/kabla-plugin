@@ -2,7 +2,7 @@ export type APIConfiguration = {
   apiKey?: string;
   url?: string;
   authorizationToken?: string;
-  siteId: number;
+  siteId: string;
 };
 
 export type Configuration = {

@@ -181,7 +181,7 @@ function transformToLogData(
   visitorId: string,
   actionType: ActionType,
   createdAt: Date,
-  siteId?: number,
+  siteId?: string,
 ) {
   return {
     actionData: JSON.stringify({
