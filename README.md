@@ -3,17 +3,15 @@
     [] Add the possibility to prevent logic handling on some pages
     [X] Send data
         [X] Centered data option
-        [X] Add option for clients to give an api
+        [] Add option for clients to give an api
         [] Add option for clients to give database url
             [] posgresql
             [] mysql
             [] mongodb
     [X] Add centred api to stock data
-    [] Make a front-end for centered clients to see their data
-    [] Add the possiblity to register as user in the front end (oauth2 provider)
-        [] generate a client ID
-        [] use the client ID, so the user can provides it to generate a token
-        [] use the token to protect the back-end side.
+    [X] Make a front-end for centered clients to see their data
+    [X] Add the possiblity to register as user in the front end (oauth2 provider)
+        [X] generate a api key
 
 ## Usage
 ### installation
@@ -23,7 +21,7 @@
 
 ### call
 ```
-    const { kabla } = require('kabla');
+    import { kabla } from 'kabla';
 ```
 
 ### For Angular users
@@ -35,12 +33,7 @@
           return new Promise((resolve, reject) => {
           // if you have a api of your're own
             kabla({
-              apiConfig: {
-                url: 'api-route',
-                method: 'POST',
-                token: 'token' or null,
-                tokenType: 'token type' or null
-              }
+              ....
             });
             //otherwise my own db (which is a small i don't suggest using it for now) 
             kabla({
@@ -59,9 +52,13 @@
             ...,
           ],
 }
-
+```
+### For React or NextJs users
+There's an hook.
+```
+    useKabla({...});
+```
 If you choose my own database (i don't recommend for now it's still not secured):
 use my back-end this way to get your informations :
  GET : https://kabla-server.herokuapp.com/site/:domainName
     param => domainName (the domain name provided in the first config) e.g ('mydomain.com') s
-```
