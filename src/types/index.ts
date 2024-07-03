@@ -13,3 +13,7 @@ export type Configuration = {
   apiConfig?: APIConfiguration;
   disable?: boolean;
 };
+
+export enum ActionType {
+  Visit = 1,
+}
