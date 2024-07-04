@@ -1,17 +1,17 @@
 ## TODO
 ### what's coming soon:
-    [] Add the possibility to prevent logic handling on some pages
-    [X] Send data
+    [x] Add the possibility to prevent logic handling on some pages
+    [x] Send data
         [X] Centered data option
         [] Add option for clients to give an api
         [] Add option for clients to give database url
             [] posgresql
             [] mysql
             [] mongodb
-    [X] Add centred api to stock data
-    [X] Make a front-end for centered clients to see their data
-    [X] Add the possiblity to register as user in the front end (oauth2 provider)
-        [X] generate a api key
+    [x] Add centred api to stock data
+    [x] Make a front-end for centered clients to see their data
+    [x] Add the possiblity to register as user in the front end (oauth2 provider)
+        [x] generate a api key
 
 ## Usage
 ### installation
