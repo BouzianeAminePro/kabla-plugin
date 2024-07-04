@@ -1,5 +1,11 @@
 # kabla
 
+## 3.3.0
+
+### Minor Changes
+
+- 6cd61df: update structure and optimize the code
+
 ## 3.1.1
 
 ### Patch Changes
