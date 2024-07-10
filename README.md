@@ -1,64 +1,99 @@
-## TODO
-### what's coming soon:
-    [x] Add the possibility to prevent logic handling on some pages
-    [x] Send data
-        [X] Centered data option
-        [] Add option for clients to give an api
-        [] Add option for clients to give database url
-            [] posgresql
-            [] mysql
-            [] mongodb
-    [x] Add centred api to stock data
-    [x] Make a front-end for centered clients to see their data
-    [x] Add the possiblity to register as user in the front end (oauth2 provider)
-        [x] generate a api key
+# Kabla.js: How to Use Guide
 
-## Usage
-### installation
-```
-    npm i kabla
-```
+Kabla.js is a powerful library designed to track user interactions on your website and send relevant information to your backend server. This guide will walk you through setting up and using Kabla.js effectively.
 
-### call
-```
-    import { kabla } from 'kabla';
+## Table of Contents
+
+- [Setup](#setup)
+- [Configuration](#configuration)
+- [Initialization](#initialization)
+- [Tracking Events](#tracking-events)
+- [Advanced Usage](#advanced-usage)
+
+## Setup
+
+First, install Kabla.js via npm:
+
+```bash
+npm install kabla
 ```
 
-### For Angular users
+Then, import the necessary functions into your project:
+
+```javascript
+import { kabla, useKabla } from 'kabla';
+import { Configuration } from 'kabla/types';
 ```
-    I suggest you define a app initializer where you call the kabla function initializer.
-    e.g:
-    app.module.ts:
-        function initializeApp(): Promise<boolean> {
-          return new Promise((resolve, reject) => {
-          // if you have a api of your're own
-            kabla({
-              ....
-            });
-            //otherwise my own db (which is a small i don't suggest using it for now) 
-            kabla({
-                domainName: 'domain_only' e.g ('mydomain.com')
-            });
-            resolve(true);
-         });
-        Then add it to your providers list:
-            providers: [
-            ...,
-            {
-              provide: APP_INITIALIZER,
-              useFactory: () => initializeApp,
-              multi: true
-            },
-            ...,
-          ],
-}
+
+## Configuration
+
+Create a configuration object to customize the behavior of Kabla.js. Below is an example configuration with all available options:
+
+```javascript
+const configuration: Configuration = {
+  apiConfig: {
+    siteId: 'your-site-id',
+    apiKey: 'your-api-key',
+  },
+  disable: false, // Set to true to disable Kabla.js
+  bulkData: true, // Set to false to disable bulk data collection
+  blackList: ['/excluded-path'], // Paths to exclude from tracking
+  ctaList: ['.cta-button'], // CSS selectors for call-to-action elements
+};
 ```
-### For React or NextJs users
-There's an hook.
+
+### Configuration Options
+
+- `apiConfig`: Contains `siteId` and `apiKey` for backend authentication.
+- `disable`: Boolean to enable or disable Kabla.js.
+- `bulkData`: Boolean to enable or disable bulk data collection.
+- `blackList`: Array of URL paths to exclude from tracking.
+- `ctaList`: Array of CSS selectors for call-to-action elements.
+
+## Initialization
+
+To initialize Kabla.js, call the `kabla` function with your configuration object:
+
+```javascript
+kabla(configuration);
 ```
-    useKabla({...});
+
+Alternatively, you can use the `useKabla` function, which is a wrapper around `kabla`:
+
+```javascript
+useKabla(configuration);
 ```
-If you choose my own database (i don't recommend for now it's still not secured):
-use my back-end this way to get your informations :
- GET : https://kabla-server.herokuapp.com/site/:domainName
-    param => domainName (the domain name provided in the first config) e.g ('mydomain.com') s
+
+## Tracking Events
+
+Kabla.js automatically tracks various user interactions such as page visits and clicks on call-to-action elements specified in the `ctaList`.
+
+### Page Visits
+
+Kabla.js monitors page visits and sends the collected data to the backend when the user leaves the page or when the page visibility changes.
+
+### Call-to-Action Elements
+
+To track clicks on specific elements, add their CSS selectors to the `ctaList` in your configuration. For example:
+
+```javascript
+ctaList: ['.cta-button', '#special-offer'],
+```
+
+## Advanced Usage
+
+### Handling Visitor UID
+
+Kabla.js checks for a unique visitor ID (`uid`) in cookies. If not found, it generates one using the `uuidv4` library and sets it as a cookie.
+
+### Sending Information
+
+Kabla.js sends collected data to the backend using the `sendInformation` function. The data includes visitor ID, site ID, and other interaction details.
+
+### Pathname Changes
+
+Kabla.js uses a `MutationObserver` to detect changes in the document's pathname. When a change is detected, it re-triggers event listeners for the new path.
+
+## Conclusion
+
+By following this guide, you can effectively integrate Kabla.js into your project to track user interactions and gather valuable data for analysis. For more detailed information and advanced configurations, refer to the source code and comments within the modules.

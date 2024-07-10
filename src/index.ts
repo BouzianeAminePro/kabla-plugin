@@ -34,7 +34,7 @@ export function kabla(configuration: Configuration) {
   }
 
   let oldPathName = document.location.pathname;
-  if (configuration.bulkData ?? true) {
+  if (configuration.bulkData || undefined === configuration.bulkData) {
     document.onvisibilitychange = async () => {
       if (document.visibilityState !== 'hidden') return;
 
