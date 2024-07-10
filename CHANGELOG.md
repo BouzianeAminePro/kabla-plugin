@@ -1,5 +1,11 @@
 # kabla
 
+## 3.3.1
+
+### Patch Changes
+
+- 4a30704: fiix vulnerabailities and update readme
+
 ## 3.3.0
 
 ### Minor Changes
